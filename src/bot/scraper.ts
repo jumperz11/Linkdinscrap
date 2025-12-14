@@ -9,6 +9,7 @@ export interface ProfileData {
     company?: string;
     location?: string;
     about?: string;
+    profilePicture?: string;
     connection_count?: number;
     mutual_connections?: number;
     experience?: Array<{
@@ -98,9 +99,6 @@ export async function scrapeProfile(page: Page): Promise<ProfileData> {
         const headlineEl = await page.locator('.text-body-medium.break-words').first();
         headline = await headlineEl.textContent() || '';
         headline = headline.trim();
-        if (headline) {
-            logAction(`  ✓ Headline: ${headline.substring(0, 50)}...`);
-        }
     } catch (e) { }
 
     // Get location
@@ -111,6 +109,20 @@ export async function scrapeProfile(page: Page): Promise<ProfileData> {
         location = location.trim();
     } catch (e) { }
 
+    // Get profile picture
+    let profilePicture = '';
+    try {
+        // Try main profile photo
+        const imgEl = await page.locator('img.pv-top-card-profile-picture__image, img.profile-photo-edit__preview, .pv-top-card__photo img').first();
+        profilePicture = await imgEl.getAttribute('src') || '';
+
+        // Fallback to any large profile image
+        if (!profilePicture) {
+            const fallbackImg = await page.locator('img[class*="profile"]').first();
+            profilePicture = await fallbackImg.getAttribute('src') || '';
+        }
+    } catch (e) { }
+
     // Extract company from headline
     let company = '';
     if (headline.includes(' at ')) {
@@ -119,7 +131,7 @@ export async function scrapeProfile(page: Page): Promise<ProfileData> {
         company = headline.split(' @ ').pop()?.trim() || '';
     }
 
-    logAction(`  ✓ Scraped: ${name} | ${headline.substring(0, 30)}...`);
+    logAction(`  ✓ ${name} | ${headline.substring(0, 40)}...`);
 
     return {
         linkedin_id,
@@ -128,6 +140,7 @@ export async function scrapeProfile(page: Page): Promise<ProfileData> {
         headline,
         company,
         location,
+        profilePicture,
         connection_count: 0,
         mutual_connections: 0,
         experience: []

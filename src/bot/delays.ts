@@ -14,22 +14,21 @@ let sessionBehavior = {
 
 /**
  * Initialize random behavior patterns for this session
- * This makes each session behave differently
+ * This makes each session behave differently - FASTER version
  */
 export function initSessionBehavior(): void {
     sessionBehavior = {
-        baseDelay: Math.floor(Math.random() * 2000) + 3000, // 3-5 seconds base
-        delayVariance: Math.floor(Math.random() * 3000) + 3000, // 3-6 seconds variance
-        scrollChance: Math.random() * 0.4 + 0.5, // 50-90% scroll chance
-        mouseChance: Math.random() * 0.4 + 0.3, // 30-70% mouse move chance
-        pauseChance: Math.random() * 0.1 + 0.1, // 10-20% pause chance
-        profilesBeforePause: Math.floor(Math.random() * 5) + 3, // Pause every 3-8 profiles
+        baseDelay: Math.floor(Math.random() * 1000) + 1500, // 1.5-2.5 seconds base (faster)
+        delayVariance: Math.floor(Math.random() * 1500) + 1000, // 1-2.5 seconds variance (faster)
+        scrollChance: Math.random() * 0.3 + 0.4, // 40-70% scroll chance
+        mouseChance: Math.random() * 0.3 + 0.2, // 20-50% mouse move chance
+        pauseChance: Math.random() * 0.05 + 0.05, // 5-10% pause chance (less pauses)
+        profilesBeforePause: Math.floor(Math.random() * 8) + 8, // Pause every 8-16 profiles (less frequent)
         pauseThreshold: 0
     };
 
-    logAction(`🎭 Session behavior randomized:`);
+    logAction(`🎭 Session behavior (fast mode):`);
     logAction(`   Base delay: ${sessionBehavior.baseDelay}ms`);
-    logAction(`   Variance: ±${sessionBehavior.delayVariance}ms`);
     logAction(`   Pause every ~${sessionBehavior.profilesBeforePause} profiles`);
 }
 

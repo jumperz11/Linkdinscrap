@@ -294,8 +294,14 @@ function renderProfiles(profiles) {
 
     elements.profileList.innerHTML = profiles.map(profile => `
     <div class="profile-item">
+      <div class="profile-avatar">
+        ${profile.profilePicture
+            ? `<img src="${profile.profilePicture}" alt="${profile.name}" onerror="this.style.display='none'">`
+            : `<div class="avatar-placeholder">${profile.name.charAt(0).toUpperCase()}</div>`
+        }
+      </div>
       <div class="profile-info">
-        <div class="name">${profile.name}</div>
+        <a href="${profile.linkedin_url}" target="_blank" class="name">${profile.name}</a>
         <div class="headline">${profile.headline || ''}</div>
       </div>
       <div class="profile-score">
