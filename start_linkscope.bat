@@ -26,8 +26,9 @@ echo.
 
 REM Check Dependencies
 echo [2/4] Checking dependencies...
-if not exist "node_modules" (
-    echo Installing npm packages...
+if not exist "node_modules\express\package.json" (
+    echo Dependencies missing or incomplete.
+    echo Installing npm packages (this may take a few minutes)...
     call npm install
     if %errorlevel% neq 0 (
         echo [ERROR] npm install failed.
@@ -59,8 +60,8 @@ echo Cleaning up old processes...
 for /f "tokens=5" %%a in ('netstat -aon ^| find ":3000" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>nul
 timeout /t 1 >nul
 
-:: Run the server
-call npx ts-node src/server.ts
+:: Run the server using npm script (handles paths correctly)
+call npm run dev
 
 echo.
 echo Server has stopped or crashed.
