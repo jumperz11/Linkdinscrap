@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
+import apiRoutes from './api/routes';
 
 // Load environment variables
 dotenv.config();
@@ -12,14 +13,26 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// API Routes (to be added)
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+// API Routes
+app.use('/api', apiRoutes);
 
 // Serve dashboard
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Error handling
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    console.log('\nShutting down...');
+    const auth = await import('./bot/auth');
+    await auth.closeBrowser();
+    process.exit(0);
 });
 
 // Start server
