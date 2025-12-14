@@ -109,7 +109,19 @@ export const profileQueries = {
     },
 
     getBySession: (sessionId: number) => {
-        return db.prepare('SELECT * FROM profiles WHERE session_id = ? ORDER BY created_at DESC').all(sessionId);
+        const rows = db.prepare('SELECT * FROM profiles WHERE session_id = ? ORDER BY created_at DESC').all(sessionId) as any[];
+        // Parse data field and merge with row
+        return rows.map(row => {
+            let parsed: any = { ...row };
+            if (row.data) {
+                try {
+                    const data = JSON.parse(row.data);
+                    parsed.profilePicture = data.profilePicture || '';
+                    parsed.linkedin_url = data.linkedin_url || row.linkedin_url;
+                } catch (e) { }
+            }
+            return parsed;
+        });
     },
 
     getByCategory: (category: string, limit = 50) => {
