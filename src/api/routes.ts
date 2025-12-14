@@ -148,21 +148,18 @@ router.post('/session/start', async (req: Request, res: Response) => {
         configQueries.set('keywords', keywords);
         configQueries.set('threshold', threshold || 75);
 
-        // Create session in database
-        const sessionId = sessionQueries.create(keywords, { threshold });
+        // Import engine dynamically to avoid circular deps
+        const { startSession } = await import('../bot/engine');
 
-        currentSession = {
-            id: Number(sessionId),
-            running: true,
-            profilesViewed: 0,
-            connectionsSent: 0,
-            followsSent: 0,
-            currentProfile: null,
-            profiles: []
-        };
-
-        // TODO: Actually start the bot engine
-        console.log(`Session ${sessionId} started with keywords: ${keywords}`);
+        // Start the session
+        const sessionId = await startSession({
+            keywords,
+            threshold: threshold || 75,
+            maxProfiles: configQueries.get('maxProfiles') || 100,
+            maxDuration: configQueries.get('maxDuration') || 60,
+            minDelay: configQueries.get('minDelay') || 3000,
+            maxDelay: configQueries.get('maxDelay') || 8000
+        });
 
         res.json({ success: true, sessionId });
     } catch (error: any) {
@@ -173,12 +170,9 @@ router.post('/session/start', async (req: Request, res: Response) => {
 // Stop session
 router.post('/session/stop', async (req: Request, res: Response) => {
     try {
-        if (currentSession.id) {
-            sessionQueries.update(currentSession.id, {
-                status: 'stopped',
-                ended_at: new Date().toISOString()
-            });
-        }
+        // Import engine dynamically
+        const { stopSession } = await import('../bot/engine');
+        await stopSession('stopped');
 
         currentSession.running = false;
 
