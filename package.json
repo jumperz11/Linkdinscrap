@@ -2,11 +2,13 @@
   "name": "linkscope",
   "version": "1.0.0",
   "description": "LinkedIn Profile Automation Bot",
-  "main": "dist/server.js",
+  "main": "electron-main.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "dist": "npm run build && electron-builder"
   },
   "keywords": [
     "linkedin",
@@ -27,8 +29,27 @@
     "@types/better-sqlite3": "^7.6.12",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.2",
+    "@types/node-cron": "^3.0.11",
+    "concurrently": "^9.2.1",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "wait-on": "^9.0.3"
+  },
+  "build": {
+    "appId": "com.linkscope.app",
+    "productName": "LinkScope",
+    "files": [
+      "dist/**/*",
+      "public/**/*",
+      "electron-main.js",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
   }
 }

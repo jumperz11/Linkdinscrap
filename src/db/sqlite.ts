@@ -10,7 +10,7 @@ if (!fs.existsSync(dataDir)) {
 
 // Database connection
 const dbPath = path.join(dataDir, 'linkscope.db');
-const db = new Database(dbPath);
+const db: any = new Database(dbPath);
 
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
