@@ -1,35 +1,34 @@
 import { Page } from 'playwright';
 import { logAction } from './scraper';
 
-// Session behavior randomization
+// Session behavior randomization - SPEED MODE
 let sessionBehavior = {
-    baseDelay: 3000,
-    delayVariance: 5000,
-    scrollChance: 0.7,
-    mouseChance: 0.5,
-    pauseChance: 0.15, // 15% chance of longer pause
+    baseDelay: 500,
+    delayVariance: 500,
+    scrollChance: 0.3,
+    mouseChance: 0.1,
+    pauseChance: 0.05,
     profilesBeforePause: 0,
     pauseThreshold: 0
 };
 
 /**
  * Initialize random behavior patterns for this session
- * This makes each session behave differently - FASTER version
+ * SPEED MODE - Much faster with minimal delays
  */
 export function initSessionBehavior(): void {
     sessionBehavior = {
-        baseDelay: Math.floor(Math.random() * 1000) + 1500, // 1.5-2.5 seconds base (faster)
-        delayVariance: Math.floor(Math.random() * 1500) + 1000, // 1-2.5 seconds variance (faster)
-        scrollChance: Math.random() * 0.3 + 0.4, // 40-70% scroll chance
-        mouseChance: Math.random() * 0.3 + 0.2, // 20-50% mouse move chance
-        pauseChance: Math.random() * 0.05 + 0.05, // 5-10% pause chance (less pauses)
-        profilesBeforePause: Math.floor(Math.random() * 8) + 8, // Pause every 8-16 profiles (less frequent)
+        baseDelay: Math.floor(Math.random() * 300) + 400, // 0.4-0.7 seconds
+        delayVariance: Math.floor(Math.random() * 400) + 300, // 0.3-0.7 seconds variance
+        scrollChance: 0.2, // 20% scroll chance
+        mouseChance: 0.1, // 10% mouse move chance
+        pauseChance: 0.02, // 2% pause chance
+        profilesBeforePause: Math.floor(Math.random() * 15) + 20, // Pause every 20-35 profiles
         pauseThreshold: 0
     };
 
-    logAction(`🎭 Session behavior (fast mode):`);
-    logAction(`   Base delay: ${sessionBehavior.baseDelay}ms`);
-    logAction(`   Pause every ~${sessionBehavior.profilesBeforePause} profiles`);
+    logAction(`⚡ SPEED MODE enabled`);
+    logAction(`   Delay: ${sessionBehavior.baseDelay}ms`);
 }
 
 /**

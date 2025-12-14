@@ -179,12 +179,8 @@ async function runSessionLoop(page: Page): Promise<void> {
 
             logAction(`👤 Visiting: ${profileId}`);
 
-            // Visit profile with human-like behavior
+            // Visit profile - SPEED MODE
             const profileData = await viewProfile(page, profileUrl);
-
-            // Simulate reading the profile
-            await simulateReading(page, 'profile');
-
             stats.profilesViewed++;
 
             // Score profile

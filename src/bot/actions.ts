@@ -3,18 +3,17 @@ import { humanDelay, humanType, humanScroll } from './delays';
 import { scrapeProfile, ProfileData } from './scraper';
 
 /**
- * View a profile (just visiting creates visibility)
+ * View a profile (just visiting creates visibility) - SPEED MODE
  */
 export async function viewProfile(page: Page, profileUrl: string): Promise<ProfileData> {
     console.log(`Visiting: ${profileUrl}`);
 
-    await page.goto(profileUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await humanDelay(1000, 2000); // Reduced from 2-4s
+    await page.goto(profileUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
-    // Quick scroll to look natural
-    await humanScroll(page, 'down');
+    // Minimal wait
+    await humanDelay(300, 600);
 
-    // Scrape profile data
+    // Scrape profile data immediately
     const profileData = await scrapeProfile(page);
 
     return profileData;

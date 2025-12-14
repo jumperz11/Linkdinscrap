@@ -52,75 +52,40 @@ export function extractProfileId(url: string): string {
 }
 
 /**
- * Scrape profile data from current page with detailed logging
+ * Scrape profile data - SPEED MODE with short timeouts
  */
 export async function scrapeProfile(page: Page): Promise<ProfileData> {
     const url = page.url();
     const linkedin_id = extractProfileId(url);
 
-    logAction(`📄 Scraping profile: ${linkedin_id}`);
-
-    // Wait for page to fully load
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1500); // Extra wait for dynamic content
-
-    // Try to get name using multiple approaches
+    // Get name from page title first (fastest)
     let name = 'Unknown';
-
-    // Method 1: Direct h1 with specific class
     try {
-        name = await page.locator('h1').first().textContent() || 'Unknown';
-        name = name.trim();
-        if (name && name.length > 0 && name.length < 100) {
-            logAction(`  ✓ Found name: ${name}`);
-        } else {
-            name = 'Unknown';
+        const title = await page.title();
+        const titleMatch = title.match(/^([^|]+)/);
+        if (titleMatch && titleMatch[1].trim().length > 0) {
+            name = titleMatch[1].trim();
         }
-    } catch (e) {
-        logAction(`  ⚠ Name extraction failed, trying fallback...`);
-    }
+    } catch (e) { }
 
-    // Method 2: If still unknown, try page title
-    if (name === 'Unknown' || name === '') {
-        try {
-            const title = await page.title();
-            // LinkedIn titles are like "Name | LinkedIn"
-            const titleMatch = title.match(/^([^|]+)/);
-            if (titleMatch && titleMatch[1].trim().length > 0) {
-                name = titleMatch[1].trim();
-                logAction(`  ✓ Found name from title: ${name}`);
-            }
-        } catch (e) { }
-    }
-
-    // Get headline
+    // Quick headline (2s timeout)
     let headline = '';
     try {
-        const headlineEl = await page.locator('.text-body-medium.break-words').first();
-        headline = await headlineEl.textContent() || '';
+        headline = await page.locator('.text-body-medium.break-words').first().textContent({ timeout: 2000 }) || '';
         headline = headline.trim();
     } catch (e) { }
 
-    // Get location
+    // Quick location (1s timeout)
     let location = '';
     try {
-        const locationEl = await page.locator('.text-body-small.inline.t-black--light.break-words').first();
-        location = await locationEl.textContent() || '';
+        location = await page.locator('.text-body-small.inline.t-black--light.break-words').first().textContent({ timeout: 1000 }) || '';
         location = location.trim();
     } catch (e) { }
 
-    // Get profile picture
+    // Quick profile picture (1s timeout)
     let profilePicture = '';
     try {
-        // Try main profile photo
-        const imgEl = await page.locator('img.pv-top-card-profile-picture__image, img.profile-photo-edit__preview, .pv-top-card__photo img').first();
-        profilePicture = await imgEl.getAttribute('src') || '';
-
-        // Fallback to any large profile image
-        if (!profilePicture) {
-            const fallbackImg = await page.locator('img[class*="profile"]').first();
-            profilePicture = await fallbackImg.getAttribute('src') || '';
-        }
+        profilePicture = await page.locator('img.pv-top-card-profile-picture__image').first().getAttribute('src', { timeout: 1000 }) || '';
     } catch (e) { }
 
     // Extract company from headline
@@ -131,7 +96,7 @@ export async function scrapeProfile(page: Page): Promise<ProfileData> {
         company = headline.split(' @ ').pop()?.trim() || '';
     }
 
-    logAction(`  ✓ ${name} | ${headline.substring(0, 40)}...`);
+    logAction(`  ✓ ${name}`);
 
     return {
         linkedin_id,
