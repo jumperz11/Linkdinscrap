@@ -36,23 +36,71 @@ export async function scrapeProfile(page: Page): Promise<ProfileData> {
     const linkedin_id = extractProfileId(url);
 
     // Wait for main content to load
-    await page.waitForSelector('.pv-text-details__left-panel', { timeout: 10000 }).catch(() => { });
+    await page.waitForSelector('h1', { timeout: 10000 }).catch(() => { });
 
-    // Extract basic info
-    const name = await page.$eval(
+    // Try multiple selectors for name (LinkedIn changes these often)
+    let name = 'Unknown';
+    const nameSelectors = [
         'h1.text-heading-xlarge',
-        el => el.textContent?.trim() || ''
-    ).catch(() => 'Unknown');
+        'h1.inline.t-24.v-align-middle.break-words',
+        '.pv-text-details__left-panel h1',
+        'h1[class*="text-heading"]',
+        '.artdeco-entity-lockup__title',
+        'h1'
+    ];
 
-    const headline = await page.$eval(
+    for (const selector of nameSelectors) {
+        try {
+            const text = await page.$eval(selector, el => el.textContent?.trim() || '');
+            if (text && text.length > 0 && text !== 'Unknown') {
+                name = text;
+                break;
+            }
+        } catch (e) {
+            continue;
+        }
+    }
+
+    // Try multiple selectors for headline
+    let headline = '';
+    const headlineSelectors = [
         '.text-body-medium.break-words',
-        el => el.textContent?.trim() || ''
-    ).catch(() => '');
+        '.pv-text-details__left-panel .text-body-medium',
+        '[data-generated-suggestion-target]',
+        '.artdeco-entity-lockup__subtitle'
+    ];
 
-    const location = await page.$eval(
-        '.pv-text-details__left-panel .text-body-small:not(.inline)',
-        el => el.textContent?.trim() || ''
-    ).catch(() => '');
+    for (const selector of headlineSelectors) {
+        try {
+            const text = await page.$eval(selector, el => el.textContent?.trim() || '');
+            if (text && text.length > 0) {
+                headline = text;
+                break;
+            }
+        } catch (e) {
+            continue;
+        }
+    }
+
+    // Try multiple selectors for location
+    let location = '';
+    const locationSelectors = [
+        '.pv-text-details__left-panel .text-body-small',
+        '.pv-text-details__left-panel span.text-body-small',
+        '[class*="top-card"] .text-body-small'
+    ];
+
+    for (const selector of locationSelectors) {
+        try {
+            const text = await page.$eval(selector, el => el.textContent?.trim() || '');
+            if (text && text.length > 0) {
+                location = text;
+                break;
+            }
+        } catch (e) {
+            continue;
+        }
+    }
 
     // Extract company from headline or experience
     let company = '';

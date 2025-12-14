@@ -71,14 +71,27 @@ export async function initBrowser(): Promise<void> {
  * Close the browser
  */
 export async function closeBrowser(): Promise<void> {
+    // Reset auth status
+    authStatus.loginInProgress = false;
+    authStatus.connected = false;
+    authStatus.error = undefined;
+
     if (context) {
-        // Save cookies before closing
-        await saveCookies();
-        await context.close();
+        try {
+            // Save cookies before closing
+            await saveCookies();
+            await context.close();
+        } catch (e) {
+            // Ignore errors when closing
+        }
         context = null;
     }
     if (browser) {
-        await browser.close();
+        try {
+            await browser.close();
+        } catch (e) {
+            // Ignore errors when closing
+        }
         browser = null;
     }
     page = null;

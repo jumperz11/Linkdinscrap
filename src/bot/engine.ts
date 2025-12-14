@@ -16,6 +16,8 @@ export interface SessionConfig {
     maxDuration: number; // minutes
     minDelay: number;
     maxDelay: number;
+    enableConnect: boolean;
+    enableFollow: boolean;
 }
 
 export interface SessionStats {
@@ -178,20 +180,27 @@ async function runSessionLoop(page: Page): Promise<void> {
             let messageSent = '';
 
             if (score >= config.threshold) {
-                // High potential - connect and follow
-                const message = await generateMessage(profileData);
-                const connected = await sendConnectionRequest(page, message);
+                // High potential - connect and follow based on config
 
-                if (connected) {
-                    stats.connectionsSent++;
-                    action = 'connected';
-                    messageSent = message;
+                // Only connect if enabled
+                if (config.enableConnect) {
+                    const message = await generateMessage(profileData);
+                    const connected = await sendConnectionRequest(page, message);
+
+                    if (connected) {
+                        stats.connectionsSent++;
+                        action = 'connected';
+                        messageSent = message;
+                    }
                 }
 
-                const followed = await followProfile(page);
-                if (followed) {
-                    stats.followsSent++;
-                    action = connected ? 'connected+followed' : 'followed';
+                // Only follow if enabled
+                if (config.enableFollow) {
+                    const followed = await followProfile(page);
+                    if (followed) {
+                        stats.followsSent++;
+                        action = action === 'connected' ? 'connected+followed' : 'followed';
+                    }
                 }
             }
 

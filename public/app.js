@@ -29,7 +29,9 @@ const elements = {
     currentProfile: document.getElementById('currentProfile'),
     profileList: document.getElementById('profileList'),
     scheduleEnabled: document.getElementById('scheduleEnabled'),
-    scheduleConfig: document.getElementById('scheduleConfig')
+    scheduleConfig: document.getElementById('scheduleConfig'),
+    enableConnect: document.getElementById('enableConnect'),
+    enableFollow: document.getElementById('enableFollow')
 };
 
 // Initialize
@@ -156,7 +158,9 @@ async function handleStartSession() {
             method: 'POST',
             body: JSON.stringify({
                 keywords,
-                threshold: parseInt(elements.threshold.value)
+                threshold: parseInt(elements.threshold.value),
+                enableConnect: elements.enableConnect.checked,
+                enableFollow: elements.enableFollow.checked
             })
         });
 

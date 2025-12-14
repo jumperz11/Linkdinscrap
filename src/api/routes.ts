@@ -22,14 +22,7 @@ router.get('/health', (req: Request, res: Response) => {
 router.get('/auth/status', async (req: Request, res: Response) => {
     try {
         const status = auth.getAuthStatus();
-
-        // If not connected and not in login progress, try to check
-        if (!status.connected && !status.loginInProgress) {
-            const connected = await auth.checkLinkedInLogin();
-            res.json({ connected, loginInProgress: false });
-        } else {
-            res.json(status);
-        }
+        res.json(status);
     } catch (error: any) {
         res.json({ connected: false, error: error.message });
     }
@@ -138,7 +131,7 @@ router.get('/session/status', (req: Request, res: Response) => {
 // Start session (placeholder)
 router.post('/session/start', async (req: Request, res: Response) => {
     try {
-        const { keywords, threshold } = req.body;
+        const { keywords, threshold, enableConnect, enableFollow } = req.body;
 
         if (!keywords) {
             return res.status(400).json({ error: 'Keywords required' });
@@ -147,6 +140,8 @@ router.post('/session/start', async (req: Request, res: Response) => {
         // Save config
         configQueries.set('keywords', keywords);
         configQueries.set('threshold', threshold || 75);
+        configQueries.set('enableConnect', enableConnect || false);
+        configQueries.set('enableFollow', enableFollow || false);
 
         // Import engine dynamically to avoid circular deps
         const { startSession } = await import('../bot/engine');
@@ -158,7 +153,9 @@ router.post('/session/start', async (req: Request, res: Response) => {
             maxProfiles: configQueries.get('maxProfiles') || 100,
             maxDuration: configQueries.get('maxDuration') || 60,
             minDelay: configQueries.get('minDelay') || 3000,
-            maxDelay: configQueries.get('maxDelay') || 8000
+            maxDelay: configQueries.get('maxDelay') || 8000,
+            enableConnect: enableConnect || false,
+            enableFollow: enableFollow || false
         });
 
         res.json({ success: true, sessionId });

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,14 +10,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
   <div class="app">
     <!-- Header -->
     <header class="header">
       <div class="logo">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 6v6l4 2"/>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
         </svg>
         <span>LinkScope</span>
       </div>
@@ -35,7 +37,8 @@
           <h3>Authentication</h3>
           <button class="btn-primary" id="loginBtn">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 2.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM8 14a6 6 0 01-4.9-2.5c.02-1.63 3.27-2.5 4.9-2.5s4.88.87 4.9 2.5A6 6 0 018 14z"/>
+              <path
+                d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 2.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM8 14a6 6 0 01-4.9-2.5c.02-1.63 3.27-2.5 4.9-2.5s4.88.87 4.9 2.5A6 6 0 018 14z" />
             </svg>
             Login to LinkedIn
           </button>
@@ -48,6 +51,22 @@
             <label for="keywords">Keywords</label>
             <input type="text" id="keywords" placeholder="e.g. startup founder, recruiter">
           </div>
+
+          <!-- Action Controls -->
+          <div class="form-group">
+            <label>Actions</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="enableConnect">
+                <span>Send Connections</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="enableFollow">
+                <span>Follow Profiles</span>
+              </label>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="threshold">Connect Threshold</label>
             <div class="input-with-value">
@@ -63,13 +82,13 @@
           <div class="session-controls">
             <button class="btn-primary" id="startBtn" disabled>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M4 2.5v11l9-5.5L4 2.5z"/>
+                <path d="M4 2.5v11l9-5.5L4 2.5z" />
               </svg>
               Start Session
             </button>
             <button class="btn-secondary" id="stopBtn" disabled>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <rect x="3" y="3" width="10" height="10" rx="1"/>
+                <rect x="3" y="3" width="10" height="10" rx="1" />
               </svg>
               Stop
             </button>
@@ -152,4 +171,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>
