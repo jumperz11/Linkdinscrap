@@ -5,6 +5,9 @@ import { viewProfile, sendConnectionRequest, followProfile, searchPeople, nextSe
 import { humanDelay, randomDelay } from './delays';
 import { sessionQueries, profileQueries, configQueries } from '../db/sqlite';
 import { updateSessionState, getCurrentSession } from '../api/routes';
+import { scoreProfile as aiScoreProfile } from '../ai/scorer';
+import { generateConnectionMessage } from '../ai/messages';
+import { getSavedUserProfile } from '../ai/analyzer';
 
 export interface SessionConfig {
     keywords: string;
@@ -34,50 +37,18 @@ let activeSession: {
     currentPageIndex: number;
 } | null = null;
 
-// Scoring function (placeholder - will be replaced with AI)
-async function scoreProfile(profile: ProfileData, userProfile: any): Promise<{ score: number; reason: string }> {
-    // Simple keyword-based scoring for now
-    // This will be replaced with AI-based scoring
-    let score = 50; // Base score
-    let reasons: string[] = [];
-
-    const keywords = activeSession?.config.keywords.toLowerCase().split(',').map(k => k.trim()) || [];
-    const searchText = `${profile.headline} ${profile.about} ${profile.company}`.toLowerCase();
-
-    // Keyword matching
-    for (const keyword of keywords) {
-        if (searchText.includes(keyword)) {
-            score += 15;
-            reasons.push(`Matches keyword: ${keyword}`);
-        }
-    }
-
-    // Connection count bonus
-    if (profile.connection_count && profile.connection_count > 500) {
-        score += 5;
-        reasons.push('Active networker');
-    }
-
-    // Mutual connections bonus
-    if (profile.mutual_connections && profile.mutual_connections > 5) {
-        score += 10;
-        reasons.push(`${profile.mutual_connections} mutual connections`);
-    }
-
-    // Cap at 100
-    score = Math.min(100, score);
-
-    return {
-        score,
-        reason: reasons.join('; ') || 'Base score'
-    };
+// Use AI for scoring (with fallback)
+async function scoreProfile(profile: ProfileData, keywords: string): Promise<{ score: number; reason: string; category: string }> {
+    const userProfile = getSavedUserProfile();
+    const result = await aiScoreProfile(profile, userProfile, keywords);
+    return result;
 }
 
-// Generate connection message (placeholder - will be AI)
-async function generateMessage(profile: ProfileData, userProfile: any): Promise<string> {
-    // Simple template for now - will be replaced with AI
-    const firstName = profile.name.split(' ')[0];
-    return `Hi ${firstName}, I came across your profile and was impressed by your background${profile.company ? ` at ${profile.company}` : ''}. Would love to connect and learn more about your work!`;
+// Use AI for message generation (with fallback)
+async function generateMessage(profile: ProfileData): Promise<string> {
+    const userProfile = getSavedUserProfile();
+    const message = await generateConnectionMessage(profile, userProfile);
+    return message;
 }
 
 /**
@@ -200,7 +171,7 @@ async function runSessionLoop(page: Page): Promise<void> {
             stats.profilesViewed++;
 
             // Score profile
-            const { score, reason } = await scoreProfile(profileData, null);
+            const { score, reason } = await scoreProfile(profileData, config.keywords);
 
             // Determine action
             let action = 'viewed';
@@ -208,7 +179,7 @@ async function runSessionLoop(page: Page): Promise<void> {
 
             if (score >= config.threshold) {
                 // High potential - connect and follow
-                const message = await generateMessage(profileData, null);
+                const message = await generateMessage(profileData);
                 const connected = await sendConnectionRequest(page, message);
 
                 if (connected) {

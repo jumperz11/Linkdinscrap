@@ -246,6 +246,17 @@ router.get('/user-profile', (req: Request, res: Response) => {
     }
 });
 
+// Analyze user's own profile (scrape and save)
+router.post('/user-profile/analyze', async (req: Request, res: Response) => {
+    try {
+        const { analyzeUserProfile } = await import('../ai/analyzer');
+        const profile = await analyzeUserProfile();
+        res.json({ success: true, profile });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get recent sessions
 router.get('/sessions', (req: Request, res: Response) => {
     try {
