@@ -31,7 +31,8 @@ const elements = {
     scheduleEnabled: document.getElementById('scheduleEnabled'),
     scheduleConfig: document.getElementById('scheduleConfig'),
     enableConnect: document.getElementById('enableConnect'),
-    enableFollow: document.getElementById('enableFollow')
+    enableFollow: document.getElementById('enableFollow'),
+    consoleOutput: document.getElementById('consoleOutput')
 };
 
 // Initialize
@@ -245,6 +246,30 @@ function updateSessionDisplay(status) {
         state.profiles = status.profiles;
         renderProfiles(status.profiles);
     }
+
+    // Update console output
+    if (status.consoleLogs && status.consoleLogs.length > 0) {
+        const consoleHtml = status.consoleLogs
+            .slice(-30) // Show last 30 lines
+            .map(line => {
+                let className = 'console-line';
+                if (line.includes('⚠') || line.includes('warning')) className += ' warning';
+                else if (line.includes('❌') || line.includes('error')) className += ' error';
+                else if (line.includes('ℹ') || line.includes('info')) className += ' info';
+                return `<p class="${className}">${escapeHtml(line)}</p>`;
+            })
+            .join('');
+        elements.consoleOutput.innerHTML = consoleHtml;
+        // Auto-scroll to bottom
+        elements.consoleOutput.scrollTop = elements.consoleOutput.scrollHeight;
+    }
+}
+
+// Helper to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function startSessionTimer() {

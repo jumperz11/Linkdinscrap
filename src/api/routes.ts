@@ -115,7 +115,11 @@ let currentSession: {
 };
 
 // Get session status
-router.get('/session/status', (req: Request, res: Response) => {
+router.get('/session/status', async (req: Request, res: Response) => {
+    // Get console buffer
+    const { getConsoleBuffer } = await import('../bot/scraper');
+    const consoleLogs = getConsoleBuffer();
+
     res.json({
         running: currentSession.running,
         sessionId: currentSession.id,
@@ -124,7 +128,8 @@ router.get('/session/status', (req: Request, res: Response) => {
         followsSent: currentSession.followsSent,
         currentProfile: currentSession.currentProfile,
         profiles: currentSession.profiles,
-        completed: !currentSession.running && currentSession.id !== null
+        completed: !currentSession.running && currentSession.id !== null,
+        consoleLogs
     });
 });
 

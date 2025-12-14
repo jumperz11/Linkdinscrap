@@ -10,28 +10,28 @@
   --bg-surface: #1A1A1A;
   --bg-elevated: #242424;
   --border: #2E2E2E;
-  
+
   --text-primary: #FFFFFF;
   --text-secondary: #A0A0A0;
   --text-muted: #666666;
-  
+
   /* Accent */
   --accent-primary: #0A66C2;
   --accent-hover: #004182;
   --success: #22C55E;
   --warning: #F59E0B;
   --error: #EF4444;
-  
+
   /* Score Colors */
   --score-high: #22C55E;
   --score-medium: #0A66C2;
   --score-low: #F59E0B;
   --score-none: #666666;
-  
+
   /* Typography */
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
+
   /* Spacing */
   --space-1: 4px;
   --space-2: 8px;
@@ -39,7 +39,7 @@
   --space-4: 16px;
   --space-6: 24px;
   --space-8: 32px;
-  
+
   /* Border Radius */
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -49,7 +49,9 @@
 /* ============================================
    Reset & Base
    ============================================ */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -110,9 +112,17 @@ body {
   border-radius: 50%;
 }
 
-.status-dot.connected { background: var(--success); }
-.status-dot.disconnected { background: var(--text-muted); }
-.status-dot.running { background: var(--accent-primary); }
+.status-dot.connected {
+  background: var(--success);
+}
+
+.status-dot.disconnected {
+  background: var(--text-muted);
+}
+
+.status-dot.running {
+  background: var(--accent-primary);
+}
 
 .layout {
   display: grid;
@@ -176,7 +186,8 @@ body {
 /* ============================================
    Buttons
    ============================================ */
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -511,4 +522,59 @@ input[type="range"]::-webkit-slider-thumb {
 
 .text-center {
   text-align: center;
+}
+
+/* ============================================
+   Checkbox Group
+   ============================================ */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   Console Panel
+   ============================================ */
+.console-panel {
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.console-output {
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  max-height: 200px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.console-line {
+  margin: 0;
+  padding: 2px 0;
+  color: #00ff00;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.console-line.muted {
+  color: var(--text-muted);
+}
+
+.console-line.error {
+  color: var(--error);
+}
+
+.console-line.warning {
+  color: var(--warning);
+}
+
+.console-line.info {
+  color: #00bfff;
 }

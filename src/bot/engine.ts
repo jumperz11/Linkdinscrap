@@ -1,8 +1,8 @@
 import { Page } from 'playwright';
 import { getPage, checkLinkedInLogin } from './auth';
-import { scrapeProfile, ProfileData } from './scraper';
+import { scrapeProfile, ProfileData, logAction, clearConsoleBuffer } from './scraper';
 import { viewProfile, sendConnectionRequest, followProfile, searchPeople, nextSearchPage } from './actions';
-import { humanDelay, randomDelay } from './delays';
+import { humanDelay, initSessionBehavior, simulateReading, takeMicroBreak } from './delays';
 import { sessionQueries, profileQueries, configQueries } from '../db/sqlite';
 import { updateSessionState, getCurrentSession } from '../api/routes';
 import { scoreProfile as aiScoreProfile } from '../ai/scorer';
@@ -122,31 +122,40 @@ async function runSessionLoop(page: Page): Promise<void> {
     const maxDurationMs = config.maxDuration * 60 * 1000;
     const startTime = stats.startTime.getTime();
 
-    console.log(`Session ${sessionId} started: ${config.keywords}`);
+    logAction(`🚀 Session ${sessionId} started: ${config.keywords}`);
 
     try {
+        // Initialize random behavior for this session
+        initSessionBehavior();
+        clearConsoleBuffer();
+        logAction(`🔍 Searching for: ${config.keywords}`);
+
         // Search for profiles
         activeSession.profileUrls = await searchPeople(page, config.keywords);
+        logAction(`📋 Found ${activeSession.profileUrls.length} profiles`);
 
         // Process profiles
         while (activeSession.running) {
             // Check limits
             if (stats.profilesViewed >= config.maxProfiles) {
-                console.log('Profile limit reached');
+                logAction('🛑 Profile limit reached');
                 break;
             }
 
             if (Date.now() - startTime >= maxDurationMs) {
-                console.log('Time limit reached');
+                logAction('⏰ Time limit reached');
                 break;
             }
+
+            // Take micro-break for humanization
+            await takeMicroBreak();
 
             // Get next profile URL
             if (activeSession.currentPageIndex >= activeSession.profileUrls.length) {
                 // Try to get more profiles from next page
                 const hasMore = await nextSearchPage(page);
                 if (!hasMore) {
-                    console.log('No more profiles to visit');
+                    logAction('📭 No more profiles to visit');
                     break;
                 }
 
@@ -164,12 +173,18 @@ async function runSessionLoop(page: Page): Promise<void> {
             // Skip if already visited
             const profileId = profileUrl.split('/in/')[1]?.split('/')[0];
             if (profileId && profileQueries.exists(profileId)) {
-                console.log(`Skipping already visited: ${profileId}`);
+                logAction(`⏭️ Skipping already visited: ${profileId}`);
                 continue;
             }
 
-            // Visit profile
+            logAction(`👤 Visiting: ${profileId}`);
+
+            // Visit profile with human-like behavior
             const profileData = await viewProfile(page, profileUrl);
+
+            // Simulate reading the profile
+            await simulateReading(page, 'profile');
+
             stats.profilesViewed++;
 
             // Score profile

@@ -107,7 +107,9 @@ async function runScheduledSession(keywords: string): Promise<void> {
             maxProfiles: configQueries.get('maxProfiles') || 100,
             maxDuration: configQueries.get('maxDuration') || 60,
             minDelay: configQueries.get('minDelay') || 3000,
-            maxDelay: configQueries.get('maxDelay') || 8000
+            maxDelay: configQueries.get('maxDelay') || 8000,
+            enableConnect: configQueries.get('enableConnect') || false,
+            enableFollow: configQueries.get('enableFollow') || false
         });
 
         console.log('[SCHEDULED] Session started successfully');

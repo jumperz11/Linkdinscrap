@@ -20,6 +20,28 @@ export interface ProfileData {
     raw?: any;
 }
 
+// Console log buffer for UI
+let consoleBuffer: string[] = [];
+const MAX_CONSOLE_LINES = 100;
+
+export function logAction(message: string): void {
+    const timestamp = new Date().toLocaleTimeString();
+    const logLine = `[${timestamp}] ${message}`;
+    console.log(logLine);
+    consoleBuffer.push(logLine);
+    if (consoleBuffer.length > MAX_CONSOLE_LINES) {
+        consoleBuffer.shift();
+    }
+}
+
+export function getConsoleBuffer(): string[] {
+    return [...consoleBuffer];
+}
+
+export function clearConsoleBuffer(): void {
+    consoleBuffer = [];
+}
+
 /**
  * Extract profile ID from URL
  */
@@ -29,152 +51,75 @@ export function extractProfileId(url: string): string {
 }
 
 /**
- * Scrape profile data from current page
+ * Scrape profile data from current page with detailed logging
  */
 export async function scrapeProfile(page: Page): Promise<ProfileData> {
     const url = page.url();
     const linkedin_id = extractProfileId(url);
 
-    // Wait for main content to load
-    await page.waitForSelector('h1', { timeout: 10000 }).catch(() => { });
+    logAction(`📄 Scraping profile: ${linkedin_id}`);
 
-    // Try multiple selectors for name (LinkedIn changes these often)
+    // Wait for page to fully load
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1500); // Extra wait for dynamic content
+
+    // Try to get name using multiple approaches
     let name = 'Unknown';
-    const nameSelectors = [
-        'h1.text-heading-xlarge',
-        'h1.inline.t-24.v-align-middle.break-words',
-        '.pv-text-details__left-panel h1',
-        'h1[class*="text-heading"]',
-        '.artdeco-entity-lockup__title',
-        'h1'
-    ];
 
-    for (const selector of nameSelectors) {
-        try {
-            const text = await page.$eval(selector, el => el.textContent?.trim() || '');
-            if (text && text.length > 0 && text !== 'Unknown') {
-                name = text;
-                break;
-            }
-        } catch (e) {
-            continue;
+    // Method 1: Direct h1 with specific class
+    try {
+        name = await page.locator('h1').first().textContent() || 'Unknown';
+        name = name.trim();
+        if (name && name.length > 0 && name.length < 100) {
+            logAction(`  ✓ Found name: ${name}`);
+        } else {
+            name = 'Unknown';
         }
+    } catch (e) {
+        logAction(`  ⚠ Name extraction failed, trying fallback...`);
     }
 
-    // Try multiple selectors for headline
+    // Method 2: If still unknown, try page title
+    if (name === 'Unknown' || name === '') {
+        try {
+            const title = await page.title();
+            // LinkedIn titles are like "Name | LinkedIn"
+            const titleMatch = title.match(/^([^|]+)/);
+            if (titleMatch && titleMatch[1].trim().length > 0) {
+                name = titleMatch[1].trim();
+                logAction(`  ✓ Found name from title: ${name}`);
+            }
+        } catch (e) { }
+    }
+
+    // Get headline
     let headline = '';
-    const headlineSelectors = [
-        '.text-body-medium.break-words',
-        '.pv-text-details__left-panel .text-body-medium',
-        '[data-generated-suggestion-target]',
-        '.artdeco-entity-lockup__subtitle'
-    ];
-
-    for (const selector of headlineSelectors) {
-        try {
-            const text = await page.$eval(selector, el => el.textContent?.trim() || '');
-            if (text && text.length > 0) {
-                headline = text;
-                break;
-            }
-        } catch (e) {
-            continue;
+    try {
+        const headlineEl = await page.locator('.text-body-medium.break-words').first();
+        headline = await headlineEl.textContent() || '';
+        headline = headline.trim();
+        if (headline) {
+            logAction(`  ✓ Headline: ${headline.substring(0, 50)}...`);
         }
-    }
+    } catch (e) { }
 
-    // Try multiple selectors for location
+    // Get location
     let location = '';
-    const locationSelectors = [
-        '.pv-text-details__left-panel .text-body-small',
-        '.pv-text-details__left-panel span.text-body-small',
-        '[class*="top-card"] .text-body-small'
-    ];
+    try {
+        const locationEl = await page.locator('.text-body-small.inline.t-black--light.break-words').first();
+        location = await locationEl.textContent() || '';
+        location = location.trim();
+    } catch (e) { }
 
-    for (const selector of locationSelectors) {
-        try {
-            const text = await page.$eval(selector, el => el.textContent?.trim() || '');
-            if (text && text.length > 0) {
-                location = text;
-                break;
-            }
-        } catch (e) {
-            continue;
-        }
-    }
-
-    // Extract company from headline or experience
+    // Extract company from headline
     let company = '';
-    const headlineParts = headline.split(' at ');
-    if (headlineParts.length > 1) {
-        company = headlineParts[headlineParts.length - 1].trim();
+    if (headline.includes(' at ')) {
+        company = headline.split(' at ').pop()?.trim() || '';
+    } else if (headline.includes(' @ ')) {
+        company = headline.split(' @ ').pop()?.trim() || '';
     }
 
-    // Try to get company from experience section if not in headline
-    if (!company) {
-        company = await page.$eval(
-            '.pv-text-details__right-panel .inline-show-more-text',
-            el => el.textContent?.trim() || ''
-        ).catch(() => '');
-    }
-
-    // Extract about section
-    const about = await page.$eval(
-        '#about ~ .display-flex .inline-show-more-text, .pv-about-section .pv-about__summary-text',
-        el => el.textContent?.trim() || ''
-    ).catch(() => '');
-
-    // Extract connection count
-    let connection_count = 0;
-    const connectionText = await page.$eval(
-        '.pv-top-card--list-bullet li:first-child span',
-        el => el.textContent || ''
-    ).catch(() => '');
-
-    const connMatch = connectionText.match(/(\d+)/);
-    if (connMatch) {
-        connection_count = parseInt(connMatch[1], 10);
-    }
-
-    // Extract mutual connections
-    let mutual_connections = 0;
-    const mutualText = await page.$eval(
-        '.pv-top-card--list-bullet .t-black--light',
-        el => el.textContent || ''
-    ).catch(() => '');
-
-    const mutualMatch = mutualText.match(/(\d+)\s*mutual/i);
-    if (mutualMatch) {
-        mutual_connections = parseInt(mutualMatch[1], 10);
-    }
-
-    // Extract experience (first 3 entries)
-    const experience: ProfileData['experience'] = [];
-    const expItems = await page.$$('[data-view-name="profile-component-entity"]');
-
-    for (const item of expItems.slice(0, 3)) {
-        try {
-            const title = await item.$eval(
-                '.t-bold span[aria-hidden="true"]',
-                el => el.textContent?.trim() || ''
-            ).catch(() => '');
-
-            const expCompany = await item.$eval(
-                '.t-normal span[aria-hidden="true"]',
-                el => el.textContent?.trim() || ''
-            ).catch(() => '');
-
-            const duration = await item.$eval(
-                '.t-black--light span[aria-hidden="true"]',
-                el => el.textContent?.trim() || ''
-            ).catch(() => '');
-
-            if (title || expCompany) {
-                experience.push({ title, company: expCompany, duration });
-            }
-        } catch (e) {
-            continue;
-        }
-    }
+    logAction(`  ✓ Scraped: ${name} | ${headline.substring(0, 30)}...`);
 
     return {
         linkedin_id,
@@ -183,37 +128,37 @@ export async function scrapeProfile(page: Page): Promise<ProfileData> {
         headline,
         company,
         location,
-        about,
-        connection_count,
-        mutual_connections,
-        experience
+        connection_count: 0,
+        mutual_connections: 0,
+        experience: []
     };
 }
 
 /**
- * Scroll page to load dynamic content
+ * Scroll page to load dynamic content with human-like behavior
  */
 export async function scrollToLoadContent(page: Page): Promise<void> {
-    await page.evaluate(async () => {
-        await new Promise<void>((resolve) => {
-            let totalHeight = 0;
-            const distance = 300;
-            const timer = setInterval(() => {
-                const scrollHeight = document.body.scrollHeight;
-                window.scrollBy(0, distance);
-                totalHeight += distance;
+    logAction(`  📜 Scrolling page naturally...`);
 
-                if (totalHeight >= scrollHeight / 2) {
-                    clearInterval(timer);
-                    resolve();
-                }
-            }, 100);
-        });
-    });
+    // Random scroll pattern
+    const scrollCount = Math.floor(Math.random() * 3) + 2; // 2-4 scrolls
+
+    for (let i = 0; i < scrollCount; i++) {
+        const scrollAmount = Math.floor(Math.random() * 300) + 200; // 200-500px
+        await page.evaluate((amount) => {
+            window.scrollBy({ top: amount, behavior: 'smooth' });
+        }, scrollAmount);
+
+        // Random pause between scrolls
+        await page.waitForTimeout(Math.floor(Math.random() * 1000) + 500);
+    }
 }
 
 export default {
     scrapeProfile,
     extractProfileId,
-    scrollToLoadContent
+    scrollToLoadContent,
+    logAction,
+    getConsoleBuffer,
+    clearConsoleBuffer
 };
