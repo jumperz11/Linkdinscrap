@@ -222,10 +222,15 @@ router.get('/schedule', (req: Request, res: Response) => {
 });
 
 // Update schedule
-router.put('/schedule', (req: Request, res: Response) => {
+router.put('/schedule', async (req: Request, res: Response) => {
     try {
         const { enabled, times, days, search_keywords } = req.body;
         scheduleQueries.save({ enabled, times, days, search_keywords });
+
+        // Reinitialize scheduler with new settings
+        const { setupSchedule } = await import('../scheduler/jobs');
+        setupSchedule({ enabled, times, days, search_keywords });
+
         res.json({ success: true });
     } catch (error: any) {
         res.status(500).json({ error: error.message });

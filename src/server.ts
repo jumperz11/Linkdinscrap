@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
 import apiRoutes from './api/routes';
+import { initializeScheduler, clearAllJobs } from './scheduler/jobs';
 
 // Load environment variables
 dotenv.config();
@@ -30,6 +31,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\nShutting down...');
+    clearAllJobs();
     const auth = await import('./bot/auth');
     await auth.closeBrowser();
     process.exit(0);
@@ -37,6 +39,9 @@ process.on('SIGINT', async () => {
 
 // Start server
 app.listen(PORT, () => {
+    // Initialize scheduler
+    initializeScheduler();
+
     console.log(`
   ╔═══════════════════════════════════════╗
   ║         LinkScope Dashboard           ║
